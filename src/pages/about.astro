@@ -1,4 +1,6 @@
 ---
+import { Image } from "astro:assets";
+import profile from "../assets/images/mains/pae-profile-pic.png";
 import BaseLayout from "../layouts/BaseLayout.astro";
 const pageTitle = "About Me";
 
@@ -18,22 +20,31 @@ const skills = [
 	"Web Develop",
 	"Mobile Develop",
 ];
-const skillColor = "navy";
-const fontWeight = "bold";
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-	<div class="m-4">
-		<h2>My new Blog site!</h2>
-		<ul>
-			<li>My name is {identity.name}.</li>
-			<li>
-				I live in {identity.country} and I'm {identity.occupation}.
-			</li>
-		</ul>
-		<p>My skills are:</p>
-		<ul>
-			{skills.map((skill) => <li class="text-rose-500">- {skill}</li>)}
-		</ul>
+	<div class="m-4 flex flex-col">
+		<div class="flex justify-center">
+			<Image
+				src={profile}
+				width={100}
+				class="w-64 h-64"
+				alt="jitrak-logo-black"
+			/>
+		</div>
+		<div class="m-4 flex flex-col">
+			<h2>My new Blog site!</h2>
+			<ul>
+				<li>My name is {identity.name}.</li>
+				<li>
+					I live in {identity.country} and I'm {identity.occupation}.
+				</li>
+			</ul>
+			<br />
+			<p>My skills are:</p>
+			<ul>
+				{skills.map((skill) => <li class="text-rose-500">- {skill}</li>)}
+			</ul>
+		</div>
 	</div>
 </BaseLayout>
