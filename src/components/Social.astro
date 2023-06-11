@@ -6,12 +6,7 @@ interface Props {
 const { platform, username } = Astro.props;
 ---
 
-<style>
-  a {
-    padding: 0.5rem 1rem;
-    color: white;
-    background-color: #4c1d95;
-    text-decoration: none;
-  }
-</style>
-<a href={`https://www.${platform}.com/${username}`}>{platform}</a>
+<a
+  class="px-2 py-1 text-white bg-purple-800 no-underline"
+  href={`https://www.${platform}.com/${username}`}>{platform}</a
+>
