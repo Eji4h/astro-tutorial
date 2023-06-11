@@ -1,9 +1,21 @@
 ---
+const tabs = [
+	{ name: "Blog", href: "/" },
+	{ name: "About", href: "/about" },
+	{ name: "Tags", href: "/tags" },
+];
 ---
 
-<div class="nav-links">
-	<a href="/">Home</a>
-	<a href="/about/">About</a>
-	<a href="/blog/">Blog</a>
-	<a href="/tags/">Tags</a>
-</div>
+<nav>
+	<div class="flex flex-row">
+		{
+			tabs.map((tab) => (
+				<li class="inline-flex justify-center mx-2 my-4">
+					<a class="font-bold text-white hover:text-gray-500" href={tab.href}>
+						{tab.name}
+					</a>
+				</li>
+			))
+		}
+	</div>
+</nav>

@@ -5,11 +5,11 @@ const pageTitle = "About Me";
 const identity = {
 	name: "Yosapol Jitrak",
 	country: "Thailand",
-	occupation: "Developer Freelancer",
+	occupation: "Developer Freelance",
 };
 
 const skills = [
-	"Leader",
+	"Leader 🌟",
 	"DevSecOps",
 	"Cloud Native",
 	"IaC",
@@ -23,22 +23,17 @@ const fontWeight = "bold";
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-	<style define:vars={{ skillColor, fontWeight }}>
-		.skill {
-			color: var(--skillColor);
-			font-weight: var(--fontWeight);
-		}
-	</style>
-	<h2>My new Blog site!</h2>
-
-	<ul>
-		<li>My name is {identity.name}.</li>
-		<li>
-			I live in {identity.country} and I a {identity.occupation}.
-		</li>
-	</ul>
-	<p>My skills are:</p>
-	<ul>
-		{skills.map((skill) => <li class="skill">{skill}</li>)}
-	</ul>
+	<div class="m-4">
+		<h2>My new Blog site!</h2>
+		<ul>
+			<li>My name is {identity.name}.</li>
+			<li>
+				I live in {identity.country} and I'm {identity.occupation}.
+			</li>
+		</ul>
+		<p>My skills are:</p>
+		<ul>
+			{skills.map((skill) => <li class="text-rose-500">- {skill}</li>)}
+		</ul>
+	</div>
 </BaseLayout>
