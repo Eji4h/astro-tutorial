@@ -1,0 +1,66 @@
+---
+title: Homebrew, Cask and mas-cli
+date: '2021-07-12T01:32:00.000Z'
+description: 'แนะนำ Homebrew, Cask และ mas-cli (Mac App Store command line interface)'
+createBy: 'Yosapol Jitrak'
+---
+
+ช่วงรอยต่อระหว่างปีที่ผ่านมานี้ผมมีเหตุให้จำเป็นที่จะต้อง Setup และลง Application ใน macOS ใหม่ทั้งหมดหมด ค่อนข้างบ่อย 4 เดือน 4 ครั้ง ทั้งเปลี่ยนงาน ใช้หลายเครื่อง เคลมบ่อยด้วย (3 เดือน ใช้สิทธิ์ AppleCare 3 เครื่อง)
+
+แน่นอนการ Setup ทั้ง OS ให้พร้อมสำหรับทำงานเป็นอะไรที่ค่อนข้างใช้เวลา และเปลืองแรงพอสมควร ทั้งการไป Download กดติดตั้งคลิก Next, Agree, Install และการลางวางต่าง ๆ ด้วยความที่ผมทำพวก Infra as Code (IaS) อยู่แล้ว จึงนำแนวคิด as Code มาใช้กับการ Setup ใน macOS ทั้งเครื่องส่วนตัว และเครื่องของ Office ด้วย จึงอยากจะมาแบ่งปันความรู้นี้ให้คนอื่นที่อาจจะยังไม่รู้เรื่องเหล่านี้ด้วยเช่นกัน
+
+ในที่นี้หลายคนอาจจะรู้จัก Homebrew ซึ่งเป็น Package manager ยอมนิยม สำหรับ Software Developer ใน macOS อยู่แล้ว วิธีการติดตั้งก็ใช้ Command-line ผ่าน Terminal ตามนี้ได้เลยครับ
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+<br />
+
+แต่ส่วนใหญ่ที่หลายคนใช้ จะใช้เพียงแค่ติดตั้ง Command-line ต่าง ๆ โดยที่ยังไม่รู้ว่าเราสามารถติดตั้ง Application อื่น ๆ ใน macOS ได้ด้วย โดยเฉพาะแบบที่ส่วนใหญ่เราใช้กันที่เป็นแบบ GUI ผ่านส่วนต่อขยายของ Homebrew ชื่อ Cask (Cask extension) วิธีการใช้งานก็สะดวกมาก หลังจากติดตั้ง Homebrew เสร็จแล้วก็สามารถใช้ Homebrew cask ได้เลย ตัวอย่างการติดตั้ง Google Chrome ผ่าน cask
+
+```bash
+brew install --cask google-chrome
+```
+
+<br />
+
+ซึ่งการติดตั้งผ่าน cask มีข้อเสียคือเราไม่ได้ทำการติดตั้งผ่าน Mac App Store ซึ่งบาง Application ควรจะติดตั้งผ่าน App Store มากกว่า เนื่องด้วยความปลอดภัย และ Permission ที่อาจจะถูกจำกัดเอาไว้ หากไม่ได้ติดตั้งผ่าน App Store ยกตัวอย่างเช่น LINE และ Bitwarden ซึ่ง Bitwarden เป็น Open Source Password Manager หากติดตั้งผ่าน Cask จะติดเรื่อง Permission บางอย่างที่ไม่สามารถทำได้ ร่วมถึงความปลอดภัยที่เราควรคำนึงถึงด้วย โชคดีที่เราสามารถติดตั้ง Application ของเราผ่าน Mac App Store ได้ผ่าน mas ซึ่งเป็น Mac App Store command-line interface ที่สามารถลงผ่าน Brew ได้ วิธีการใช้งานก็ตาม [Mac App Store command line interface GitHub](https://github.com/mas-cli/mas)
+
+หรือจะดูวิธีการติดตั้งตามนี้ได้เลยครับ
+
+```bash
+brew install mas
+```
+
+<br />
+
+เมื่อติดตั้งเสร็จเรียบร้อยแล้ว หากต้องการลง Application ผ่าน mas ก็สามารถทำได้โดยขอยกตัวอย่างเป็นการติดตั้ง LINE ผ่าน mas โดยเราจะต้องรู้ id ของ Application ที่เราต้องการจะทำการติดตั้งก่อน หรือใช้การ Search ผ่าน Command-line ก็ได้ แต่ผมจะแสดงวิธีการเอา id มาโดยที่ไม่ต้องใช้ Command-line นะครับ ไปที่ Mac App Store แล้วเลือกไปที่ App เป้าหมายของเรา หลังจากนั้นคลิกไปที่วงสีแดง และส้มไว้ตามลำดับ
+
+![mas.png](mas.png)
+
+<br />
+
+อันนี้ขอยกตัวอย่างเป็น App LINE นะครับ หลังจากนั้นจะได้ url ตามนี้มาครับ https://apps.apple.com/th/app/line/id539883307?mt=12 ซึ่งเราจะเอาตัวเลขหลังid และก่อนถึงเครื่องหมาย ? มาใช้เป็น id ของเราครับ หลังจากนั้นก็ติดตั้งผ่าน mas ผ่าน Command-line ตามนี้ได้เลยครับ
+
+```bash
+mas install 539883307
+```
+
+สำหรับใครที่ชอบใช้ GUI ในการติดตั้งมากกว่าจะมี [Cakebrew](https://www.cakebrew.com/) ซึ่งส่วนตัวผมเองยังไม่เคยใช้เลยเหมือนกันครับ
+
+ขอแถมอีกหน่อย ปกติ macOS จะ Set ให้ Default browser เป็น Safari ซึ่งส่วนตัวผมใช้ Google Chrome ไม่ได้ใช้ Safari เลยในชีวิตประจำวัน จึงทำการ Set Google Chrome เป็น Default browser ด้วยคำสั่ง
+
+```bash
+open -a "Google Chrome" --args --make-default-browser
+```
+
+<br />
+
+ตอนนี้ผมจด Domain และทำ url ของตัวเองสำหรับ Copy setup command-line ที่จริง ๆ มีรายละเอียดมากกว่านี้เยอะ มาวางตูมเดียวเกือบจะจบทุกอย่าง (https://dotfiles.jitrak.dev/) ซึ่งถ้าอธิบายตรงนี้น่าจะยืดยาวเกินขอบเขตของหัวข้อไปเยอะ แต่ให้ดีควรจะทำเป็น Dotfiles เป็น Bootstrap เลยมากกว่า ถ้าใครสนใจศึกษาต่อก็ไปตาม นี้ได้เลยครับ [Getting Started With Dotfiles
+](https://medium.com/@webprolific/getting-started-with-dotfiles-43c3602fd789#:~:text=Dotfiles%20are%20used%20to%20customize,are%20hidden%20in%20directory%20listings) และในแบบภาษาไทย [Automate การเซ็ตอัพเครื่องแมคด้วย Shell script และ Dotfiles
+](https://medium.com/event-pop/automate-%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%80%E0%B8%8B%E0%B9%87%E0%B8%95%E0%B8%AD%E0%B8%B1%E0%B8%9E%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B9%81%E0%B8%A1%E0%B8%84%E0%B8%94%E0%B9%89%E0%B8%A7%E0%B8%A2-shell-script-%E0%B9%81%E0%B8%A5%E0%B8%B0-dotfiles-40b6b21abcd5) ซึ่งมี Template ที่คนทำเอาไว้มากมาย หรือถ้าตัวอย่างของคนไทย ก็อาจจะเป็นของพี่่หนุ่ม (https://github.com/narze/dotfiles) เจ้าของบทความภาษาไทยเมื่อสักครู่ที่เพิ่งกล่าวถึงไปนั้นแหละครับ
+
+อย่างไรก็ตามผมยังไม่ว่างทำถึงขั้นนั้น และนี้เป็นเหตุผลที่ทำให้ผมหายจากการเขียนบทความไปนาน เพราะตอนแรกคิดว่าจะทำ Dotfiles ให้เสร็จก่อนค่อยมาเขียน แต่ดูแล้วมีเรื่องอื่นที่สำคัญกว่าเลยยังไม่ได้ทำสักที
+
+หวังว่าบทความนี้จะเป็นประโยชน์ให้กับใครอีกหลายคนนะครับ เจอกันบทความหน้าครับ

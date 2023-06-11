@@ -1,0 +1,131 @@
+---
+layout: ../../layouts/MarkdownPostLayout.astro
+title: Bitwise C# [3/3] Apply Bitwise
+date: "2020-01-10T03:00:00.000Z"
+description: "ประยุกต์การใช้งาน Bitwise กับงานจริง"
+author: "Yosapol Jitrak"
+---
+
+<span style="color: red">บทความนี้เป็นการนำบทความที่เคยเขียนเมื่อหลายปีมาแล้ว มาทำการ Repost ใหม่</span><br />
+
+หลังจากที่ปูพื้นจาก [Bitwise C# [1/3] Why to Bitwise](https://jitrak.dev/bitwise-csharp-1-in-3-why-to-bitwise/) <br />
+และ [Bitwise C# [2/3] Bitwise Operator](https://jitrak.dev/bitwise-csharp-2-in-3-bitwise-operator) <br />
+บทความนี้จะพาคุณผู้อ่านไปดูการประยุกต์ใช้กันจริง ๆ กันแล้ว <br />
+
+ไม่รู้ยังจำปัญหาของเราตั้งแต่บทความแรกได้อยู่หรือเปล่า <br />
+ขอเกริ่นให้นึกออกกันสักนิดหน่อยนะครับ <br />
+ผมได้โจทย์ทำเกมผสมสี มีสีตามนี้ เหมือนเดิมเลยครับ <br />
+
+- <span style="color:white">สีขาว</span>
+- <span style="color:red">สีแดง</span>
+- <span style="color:blue">สีน้ำเงิน</span>
+- <span style="color:yellow">สีเหลือง</span>
+- <span style="color:purple">สีม่วง</span>
+- <span style="color:orange">สีส้ม</span>
+- <span style="color:green">สีเขียว</span>
+
+คิดว่าคงจะนึกออกกันบ้างแล้ว คราวนี้มาต่อกัน <br />
+การที่จะทำเรื่อง Bitwise ในภาษา C# ตามโจทย์ของเรานั้น <br />
+เรายังต้องใช้ Flags attribute <br />
+เพื่อให้ Enum type ของเราสามารถแสดงชุดของ Flags ได้ <br />
+สุดท้ายแล้วหน้าตาของ ColorType ก็ออกมาเป็นดังนี้ <br />
+
+```csharp
+[System.Flags]
+public enum ColorType
+{
+    White = 0,
+    Red = 1 << 0,
+    Blue = 1 << 1,
+    Yellow = 1 << 2,
+    Purple = Red | Blue,
+    Orange = Red | Yellow,
+    Green = Blue | Yellow,
+}
+```
+
+<br />
+
+เวลาเอาไปใช้งานก็จะประมาณนี้
+
+```csharp
+ColorType colorType = color1 | color2;
+bool isPurple = colorType == ColorType.Purple;
+```
+
+<br />
+<br />
+
+ขอยกอีกตัวอย่างนึงเป็นเรื่องเช็คสถานะ Quest ว่าตรงตามเงื่อนไขของเราหรือเปล่า <br />
+โดยมี Quest state ดังนี้ <br />
+
+```csharp
+[System.Flags]
+public enum QuestState
+{
+
+    /// <summary>
+    /// Quest is unassigned
+    /// </summary>
+    Unassigned = 0x1,
+
+    /// <summary>
+    /// Quest is active (assigned but not completed yet)
+    /// </summary>
+    Active = 0x2,
+
+    /// <summary>
+    /// Quest was completed successfully; corresponds to "success" or "done"
+    /// </summary>
+    Success = 0x4,
+
+    /// <summary>
+    /// Quest was completed in failure
+    /// </summary>
+    Failure = 0x8,
+
+    /// <summary>
+    /// Quest was abandoned
+    /// </summary>
+    Abandoned = 0x10
+}
+```
+
+<br />
+
+อันนี้เอามาจาก Plugin ชื่อว่า [Dialogue System](https://www.assetstore.unity3d.com/en/#!/content/11672) <br />
+(ที่น่าตามันเป็นแบบนี้ เพราะเขาเขียนในรูปแบบของเลขฐาน 16 นะครับ) <br />
+
+ทีนี้ปัญหามันเกิดก็ตอนที่ต้องการจะเช็คอะไรสักอย่าง <br />
+ให้ทำงานก็ต่อเมื่อ Quest เป็นสถานะนึง หรืออีกสถานะนึงก็ได้ <br />
+เช่น เป็นทั้ง Active หรือ Success ก็ได้ ถึงจะทำงานที่ต้องการ <br />
+
+```csharp
+QuestState matchQuestState = QuestState.Active | QuestState.Success;
+```
+
+<br />
+
+การที่เราจะเช็คว่าสถานะ Quest ของเรานั้นเป็นค่าใดค่าหนึ่งในเงื่อนไขหรือเปล่า <br />
+เราจะต้องใช้ตัวดำเนินการ &(AND) มาช่วย จะเขียนได้แบบนี้ <br />
+
+```csharp
+bool isQuestStateMatch = (quest.QuestState & matchQuestState) == quest.QuestState;
+if (isQuestStateMatch) ...
+```
+
+<br />
+
+จริง ๆ แล้วโจทย์ผสมสีนี้คือเบื้องหลังของ Minigame นึงจากเกม Friendship21s
+![Friendship21s](./flower-shop.jpg)
+
+ถ้าอยากลองเล่นก็สามารถไป Download ได้ทั้ง Google Play Store และ App Store <br />
+
+[<img src="https://cdn.tigthai.com/imguploads/201711/20/06451810015111483682317_bt_googleplay_new.png">](https://play.google.com/store/apps/details?id=com.miryninnovation.friendship21s) &nbsp;&nbsp;&nbsp;&nbsp;
+[<img src="https://cdn.tigthai.com/imguploads/09811080014806912515830_bt_appstore.png">](https://itunes.apple.com/th/app/friendship21s/id1290104184)
+
+จะเห็นได้ว่าหากเราเสียเวลาคิด หาข้อมูล และนำมาประยุกต์ใช้ก่อนที่จะลุยลงมือทำเลย <br />
+อาจจะช่วยเราลดความยุ่งยากซับซ้อนในการทำงานของเราไปได้มาก <br />
+
+Link: [Bitwise C# [1/3] Why to Bitwise](https://jitrak.dev/bitwise-csharp-1-in-3-why-to-bitwise/) <br />
+Link: [Bitwise C# [2/3] Bitwise Operator](https://jitrak.dev/bitwise-csharp-2-in-3-bitwise-operator) <br />

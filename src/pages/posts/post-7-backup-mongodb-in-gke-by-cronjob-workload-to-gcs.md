@@ -1,0 +1,428 @@
+---
+title: Backup MongoDB in GKE by Cronjob Workload to GCS
+date: '2020-10-28T18:00:00.000Z'
+description: 'ทำ Backup MongoDB ใน Google Kubernetes Engine ด้วย CronJob Workload to Google Cloud Storage'
+createBy: 'Yosapol Jitrak'
+---
+
+ล่าสุดในงาน GDG Cloud Bangkok DevFest 2020 <br />
+ผมได้เป็น Speaker ในหัวข้อ Backup MongoDB in GKE by Cronjob Workload to GCS <br />
+ซึ่งเวลาค่อนข้างจำกัด ไม่มีเวลาอธิบายเท่าไหร่ จึงคิดว่าจะมาอธิบายแบบละเอียดในบทความนี้ <br />
+
+![Yosapol Jitrak](./speaker-from-cloud-ace-thailand.png)
+ขอบคุณรูปจาก คลาวด์ เอซ - Cloud Ace Thailand <br />
+
+# Why
+
+เริ่มต้นด้วยทำไมเราจะต้องทำสิ่งนี้ ทุกคนที่ทำงานสายนี้น่าจะรู้ดีนะครับว่าการสำรองข้อมูล ถือเป็นเรื่องที่สำคัญ ล่าสุดเพิ่งจะมีข่าวดังไป คือ โรงพยาบาลแห่งนึงในประเทศโดน Ransomware เรียกค่าไถไป โดยถึงแม้ว่าจะมี Backup ไว้ แต่ก็เป็นข้อมูลที่ทำสำรองไว้เมื่อหลายปีมาแล้ว เห็นข่าวแบบนี้แล้วเราก็น่าจะเห็นความสำคัญของการสำรองข้อมูลมากขึ้นไม่มากก็น้อย ซึ่งแน่นอนการสำรองข้อมูลด้วยวิธีการแบบ Manual ก็เป็นงานที่ซ้ำซาก และค่อนข้างที่จะน่าเบื่อ คนเลยไม่ค่อยนิยมทำกัน ถ้าจะทำโดยส่วนมากแล้วเขาก็จะใช้เครื่องมือพวก Cron ในการทำ Schedule backup ยกตัวอย่างเป็นทุก ๆ วัน ตอนตี 2 เป็นต้น แต่คราวนี้ถ้ามันอยู่ใน Kubernetes (K8s) เราจะทำอย่างไรดี แน่นอนเราคงไม่อยากไป Set CronJob ใน Container ที่ Run DB ของเราอยู่แน่นอน เพราะจะขัดหลักการ Single Responsibility ที่มีหลาย Service run อยู่ใน Container เดียวกัน (https://runnable.com/blog/9-common-dockerfile-mistakes) <br />
+
+โจทย์ของผมมีดังนี้ครับ
+
+- มี MongoDB ที่ run ใน Kuberentes Cluster อยู่แล้ว
+- มีความต้องการทำ Schedule Backup
+- ข้อมูลสามารถย้ายข้ามไปยัง Cluster อื่นได้
+- สามารถกู้ข้อมูลคืนแค่บาง Collection ได้
+- สามารถลบสิ่งที่ Backup ไว้ เมื่อผ่านไปช่วงระยะเวลาหนึ่ง
+
+ขยายเรื่องความต้องการที่ว่าข้อมูลสามารถย้ายข้ามไปยัง Cluster อื่นได้ ในกรณีที่เราแยก Environment ระหว่าง Develop, Staging, Production ด้วยการแยก Cluster เราสามารถเอาข้อมูลของ Environment จาก Cluster นึงไปยังอีก Cluster นึงได้ อาจจะเป็นการเอาข้อมูลจาก Develop ไปทดสอบที่ Staging หรือนำข้อมูลจาก Production มาวิเคราะห์ปัญหาที่เกิดขึ้น ใน Environment อื่น เป็นต้น <br />
+
+ขยายเรื่องความต้องการสามารถกู้ข้อมูลคืนแค่บาง Collection ได้ แน่นอนว่าบางครั้งเราไม่ต้องการกู้คืนข้อมูลทั้งหมดทุก Collection อาจจะต้องการแค่บาง Collection เท่านั้น <br />
+
+# Ideas
+
+ไม่นานมานี้ผมได้รู้จักกับ Verelo ซึ่งเป็นเครื่องมือเอาไว้สำหรับ Backup และ Restore ได้ทั้ง Kubernetes (K8s) resources และ Persistent Volumes (PV) ซึ่งจากที่ดูแล้วน่าจะตอบโจทย์เราได้เกือบหมดครับ ยกเว้นเสียแต่เรื่องสามารถกู้ข้อมูลคืนแค่บาง Collection ได้ ซึ่งถ้าเราใช้ Velero ก็ทำไม่ได้ครับ <br />
+
+![Velero](./velero.png)
+Reference: https://velero.io/ <br />
+
+คราวนี้เราลองมาดูกันนะครับ จริง ๆ แล้วใน K8s ก็มี Workload ที่เป็น CronJob ที่ถึงแม้ว่าจะเป็น Beta version แต่ก็มีมานานแล้ว ซึ่งดูน่าจะตอบโจทย์ของเราพอดี <br />
+![CronJob Workload](./cronjob-workload.png)
+Reference: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/ <br />
+
+นอกจากนี้ คำถามต่อมาคือเราจะเอาข้อมูล Backup ของเราไปเก็บไว้ที่ไหน ซึ่งถ้าใครเคยใช้ Cloud มาบ้างน่าจะพอรู้จักพวก Simple Storage Service (S3) ของ AWS หรือ Google Cloud Storage (GCS) ของ Google Cloud เป็นต้น ซึ่งดูแล้วน่าจะเหมาะสมกว่าการที่เราจะต้องสร้าง PV และ Disk มาเก็บไว้เอง ทั้งเรื่องของ Service-level agreement (SLA) และการ Maintain ต่าง ๆ แน่นอนงานนี้เราอยู่ในงาน GDG Cloud Bangkok DevFest 2020 แถม Cluster อยู่ใน GKE ผมจึงจะกล่าวถึง GCS เป็นหลัก ใน GCS ยังมีสิ่งที่เรียกว่า Object Lifecycle Management ที่ทำให้เราสามารถตั้งกฎได้ว่าเมื่อ Object ที่ถูกเก็บไว้ถึงเวลาที่กำหนด เราสามารถสั่งให้ลบ หรือย้าย Class ของ Object นั้นไปยัง Class ที่มีราคาถูกกว่าเดิมได้ <br />
+
+![Object Lifecycle Management](./object-lifecycle-management.png)
+Reference: https://cloud.google.com/storage/docs/lifecycle <br />
+
+![Backup MongoDB in GKE by Cronjob Workload to GCS Overview](./backup-mongodb-in-gke-by-cronjob-workload-to-gcs-overview.png)
+ภาพไอเดียคร่าว ๆ <br />
+
+## คราวนี้มาต่อของที่จำเป็นจะต้องใช้นะครับ
+
+- mongodump command ใน Container
+- gsutil command ใน Container
+- GCS Bucket
+- Service account key
+
+ขยายส่วน Service account key เราจำเป็นที่จะต้องมีก็เพื่อให้สิทธิ์ในการเข้าไปเขียนไฟล์ใน GCS Bucket ที่เราสร้างขึ้นมา โดยใน Google Cloud เราจะต้องทำการสร้าง Service account ขึ้นมาก่อน นำ Service account นั้นไปให้สิทธิ์ต่าง ๆ โดยในที่นี้เราจะสร้าง Service account key เป็นสิ่งที่เอาไว้สำหรับใช้ในการ Authentication ว่าเป็น Service account นั้น<br />
+
+### คำถามถัดมาคือเราจะทำอย่างไรให้มีทั้ง mongodump และ gsutil ใน Container
+
+เริ่มแรกสุดก็คิดแบบง่ายก่อนเลย ก็คือเราจะต้องทำการ Build image ใหม่ขึ้นมา เพื่อให้มี command ทั้ง 2 ตัว ซึ่งถ้าลอง Googling ดูก็จะมีคนคิดเหมือนกัน แต่เป็นใน Version MySQL ตามรูปด้านล่างนี้ <br />
+
+![MySQL Backup Docker Image](./mysql-backup-docker-image.png)
+Reference: https://medium.com/searce/cronjob-to-backup-mysql-on-gke-23bb706d9bbf <br />
+
+แต่ก็มาคิดต่ออีกว่า แล้วถ้าเกิดต้องการเปลี่ยน Version ของ MongoDB หรือ Google Cloud SDK เราก็จะต้องมาทำ Build image ใหม่อีกอย่างนั้นเหรอ ตอนนั้น MongoDB ที่ดูแลอยู่มีหลาย Cluster รวมถึงแต่ละ Cluster ก็มีหลาย Version อีก เราจะต้อง Build image แยกของใครของมันก็ดูจะถึกเกินไป แล้วเวลาที่จะต้อง Update Google Cloud SDK version ทีนี้จะต้อง Build ใหม่กี่ image แค่คิดก็ปวดหัวแล้ว <br />
+
+![Think Meme](./think-meme.png)
+
+ซึ่งถัดมาก็คิดต่อได้ว่า Pod ใน K8s สามารถมีได้หลาย Container รวมถึงมี Init containers ด้วย <br />
+
+![Sidecar Container](./sidecar-container.gif)
+
+Reference: https://banzaicloud.com/blog/k8s-sidecars/ <br /><br />
+
+![Backup MongoDB in GKE by Cronjob Workload to GCS Detail](./backup-mongodb-in-gke-by-cronjob-workload-to-gcs-detail.png)
+ภาพในหัวจึงออกมาได้เป็นแบบนี้ <br />
+
+Pod มี 2 Container ที่มี image ตามนี้ <br />
+
+- mongo เป็น Init container <br />
+  ใช้ mongodump command ไปต่อกับ MongoDB ตัวที่ Run อยู่แล้ว นำ Backup ที่ได้มาเก็บไว้ใน Volume ที่เป็น Type emptyDir คือเก็บไว้ใน Node ที่ Run container นี้
+- google/cloud-sdk <br />
+  ใช้ gsutil command ในการนำไฟล์ที่ Volume ไว้ก่อนหน้านีไปเก็บไว้ที่ GCS Bucket ของเรา <br />
+
+ข้อดีของการใช้ Sidecar container แบบนี้ คือเราไม่ต้องมาสร้าง และดูแล Container image เอง google/cloud-sdk อยากมี Update ก็ใช้ตัวล่าสุดไปเลย โอกาสที่จะ Breaking change ก็มี แต่น้อยมาก และส่วนตัวคิดว่าดีกว่าปล่อยให้ Deprecate ในอนาคตการไปขึ้น Backup schedule ตัวใหม่ก็แค่เปลี่ยน image mongo ให้ตรงก็พอแล้ว <br />
+
+# Demo
+
+## สำรวจสิ่งที่เตรียมไว้ก่อน
+
+- K8s cluster
+- MongoDB ใน K8s Cluster <br />
+  ในที่นี้ผมลงผ่าน Helm chart จาก bitnami/mongodb (https://bitnami.com/stack/mongodb/helm)
+- Mock data ใน DB <br />
+  ผมใช้ Mock data จาก https://github.com/talenteddeveloper/mongo_sample_dataset
+
+## Create Service Account and Key
+
+อย่างแรกเลยจะทำการเตรียม Service account <br />
+
+ไปที่ IAM และเลือกไปที่ Service Accounts
+![](./create-service-accounts/create-service-account-1.jpg) <br />
+
+จากนั้นกดปุ่ม CREATE SERVICE ACCOUNT
+![](./create-service-accounts/create-service-account-2.jpg) <br />
+
+ทำการตั้งชื่อ Service account name จากนั้น กดปุ่ม CREATE
+![](./create-service-accounts/create-service-account-3.jpg) <br />
+
+ถึงตรงนี้จริง ๆ เราสามารถให้สิทธิ์จัดการ Google Cloud Storage กับ Service account นี้กับทั้ง Google Cloud Project นี้ได้เลย
+แต่ผมจะไม่ให้สิทธิ์ที่ตรงนี้ เพราะเราต้องการให้สิทธิ์กับแค่ Bucket เดียวเท่านั้น เราควรให้สิทธิ์เท่าที่จำเป็น เพราะฉะนั้นกด DONE ไปได้เลย
+![](./create-service-accounts/create-service-account-4.jpg) <br />
+
+เมื่อสร้าง Service account เสร็จแล้ว ให้ทำการ Copy Email ของ Service account ที่เพิ่งสร้างเก็บไว้ก่อน
+![](./create-service-accounts/create-service-account-5.jpg) <br />
+
+ถัดไปเราจะมาทำการสร้าง Key จาก Service account นี้ กดไปที่จุด 3 จุด ตรงคอลัมน์ Actions แล้วกด Create key ต่อเลย
+![](./create-service-accounts/create-service-account-6.jpg) <br />
+
+เมื่อกด Create key มาแล้ว จะมีให้เลือกระหว่าง JSON และ P12 ปกติจะใช้ JSON ก็เลือก JSON และกด CREATE ไป หลังจากนั้นเราก็เลือกเซฟไฟล์ไว้สักที่ในเครื่องเราก่อน
+![](./create-service-accounts/create-service-account-7.jpg) <br />
+
+## Create GCS Bucket
+
+ต่อมาจะทำการสร้าง Google Cloud Storage Bucket ใหม่ <br />
+
+ไปที่ Storage ใน Google Cloud Console
+![](./create-gcs-buckets/create-gcs-bucket-1.jpg) <br />
+
+กดปุ่ม Create Bucket
+![](./create-gcs-buckets/create-gcs-bucket-2.jpg) <br />
+
+ตั้งชื่อ แล้วกด CONTINUE
+![](./create-gcs-buckets/create-gcs-bucket-3.jpg) <br />
+
+เลือก Location type จากนั้นกดปุ่ม CREATE
+![](./create-gcs-buckets/create-gcs-bucket-4.jpg) <br />
+
+## Binding Service account to Bucket
+
+เมื่อเราสร้าง GCS Bucket เป็นที่เรียบร้อยแล้ว เราจะทำการผูกสิทธิ์ในการจัดการกับ Bucket นี้ให้กับ Service account ที่เราสร้างไว้ก่อนหน้านี้ <br />
+
+ไปที่ PERMISSIONS
+![](./binding-service-account-to-buckets/binding-service-account-to-bucket-1.jpg) <br />
+
+จากนั้นกดไปที่ปุ่ม +ADD
+![](./binding-service-account-to-buckets/binding-service-account-to-bucket-2.jpg) <br />
+
+- ช่อง New members ให้ใส่เป็น Email ของ Service account ที่ได้ Copy ไว้ก่อนหน้านี้
+- ส่วน Role ผมให้เป็น Storage Object Admin
+  ![](./binding-service-account-to-buckets/binding-service-account-to-bucket-3.jpg) <br />
+
+## Create ConfigMaps
+
+ตอนนี้เรากำลังจะทำการสร้าง Configmaps ไว้สำหรับเก็บตัวแปร และ File scripts ของเรา แบ่งออกเป็น 3 ConfigMap ดังนี้ <br />
+
+### Create mongodb-backup-schedule-env.yaml
+
+```YAML
+apiVersion: v1
+data:
+  BACKUPS_FOLDER: /backups
+  GCS_BUCKET: gdg-cloud-devfest-mongodb-backup
+  MONGO_HOST: mongodb
+kind: ConfigMap
+metadata:
+  name: mongodb-backup-schedule-env
+  namespace: mongodb
+```
+
+เป็น ConfigMap ที่เอาไว้เก็บค่าตัวแปรที่ตัวที่ Scripts จะเอาไปใช้อีกที โดยที่ไม่ต้องไป Hardcode อยู่ใน Script <br />
+
+### Create mongodump-all-db-sh.yaml
+
+```YAML
+apiVersion: v1
+data:
+  mongodump-all-db.sh: |-
+    #!/bin/bash
+
+    mongodump -h $MONGO_HOST -u $MONGO_USERNAME -p $MONGO_PASSWORD -o $BACKUPS_FOLDER --forceTableScan --gzip
+kind: ConfigMap
+metadata:
+  name: mongodump-all-db-sh
+  namespace: mongodb
+```
+
+เป็น ConfigMap ที่จะเอาไปทำการสร้างเป็น File Bash script ในการ Dump database ที่ต้องการ Backup ออกมาไปเป็นไว้ที่ path ตามตัวแปร BACKUPS_FOLDER <br />
+
+### Create gsutil-to-gcs-sh.yaml
+
+```YAML
+apiVersion: v1
+data:
+  gsutil-to-gcs.sh: |-
+    #!/bin/bash
+
+    FOLDER=$(date +%Y%m%d)
+    gcloud auth activate-service-account --key-file=/service-key/service-key.json
+    gsutil -m rsync -r $BACKUPS_FOLDER gs://$GCS_BUCKET/$FOLDER
+kind: ConfigMap
+metadata:
+  name: gsutil-to-gcs-sh
+  namespace: mongodb
+```
+
+เป็น ConfigMap ที่จะเอาไปทำการสร้างเป็น File Bash script ในการนำ Backup file ทั้ง BACKUPS_FOLDER ไปเก็บไว้ที่ GCS Bucket ซึ่งก่อนที่จะนำไฟล์ไปเก็บไว้ที่ GCS ได้ จะต้องทำการ Authentication กับ Service account key ที่ Download มา และจะตั้งชื่อตาม ปีเดือนวันที่ทำการ Backup ไว้
+
+หลังจากนั้นให้ทำการ Create configmap ทั้งหมดเข้าไปใน K8s Cluster โดย YAML ทั้งหมด ผมจะทำอยู่ที่ Namespace เดียวกับที่ Database run อยู่
+
+```Shell
+kubectl create -f configs/
+```
+
+![](./create-configmaps.jpg)
+
+## Create Secrets
+
+ก่อนหน้านี้เราได้ทำการสร้าง ConfigMap ไป ซึ่งจะเห็นว่ายังมีบางตัวแปรที่ขาดอยู่ อย่าง MONGO_USERNAME, MONGO_PASSWORD, service-key.json ที่ไม่รู้ไปเอามาจากไหน เนื่องจากของพวกนี้เป็น Credential ที่ไม่ควรเก็บเป็น Plain text ในระบบ ใน K8s จะมีสิ่งที่เรียกว่า Secret เอาไว้เก็บของพวกนี้โดยเฉพาะ ถึงแม้จะเป็นแค่การเข้า Base64 ก็เถอะ แต่ถ้าอยากได้ Security มากกว่านี้ สามารถใช้ Third party ได้นะครับ <br />
+
+ให้ทำการเข้า Base64 ทั้ง MONGO_USERNAME, MONGO_PASSWORD, service-key.json
+
+โดยใช้คำสั่ง Base64 และแทนที่ DATA ด้วยข้อมูลที่ต้องการเข้า Base64 นะครับ
+
+```Shell
+echo -n "DATA" | base64
+```
+
+สำหรับ File Service account key ให้ใช้
+
+```Shell
+cat service-key.json | base64
+```
+
+<br />
+
+สำหรับ Linux อาจจะต้องใช้ท่านี้ในการเข้า Base64 กับ File Service account key เพื่อให้ผลลัพท์อยู่ในบรรทัดเดียว
+
+```Shell
+cat service-key.json | base64 -w 0
+```
+
+<br />
+
+mongodb-user-password.yaml
+
+```YAML
+apiVersion: v1
+data:
+  MONGO_PASSWORD:
+  MONGO_USERNAME:
+kind: Secret
+metadata:
+  name: mongodb-user-password
+  namespace: mongodb
+type: Opaque
+```
+
+เป็น Secret ที่เก็บค่า username และ password สำหรับในการต่อ Database โดยให้เติมค่าที่ทำการเข้า Base64 เองเลยนะครับ <br />
+
+gcs-service-account-key.yaml
+
+```YAML
+apiVersion: v1
+data:
+  service-key.json:
+kind: Secret
+metadata:
+  name: gcs-service-account-key
+  namespace: mongodb
+type: Opaque
+```
+
+เป็น Secret ที่เก็บค่า Service account key ที่ Download มาก่อนหน้านี้ และทำการเข้า Base64 เรียบแล้วแล้ว อย่าลืมเติมค่าที่ทำการเข้า Base64 แล้วเองนะครับ <br />
+
+ทำการสร้าง Secret ทั้งหมด เข้าไปใน K8s Cluster โดย YAML ทั้งหมด ผมจะทำอยู่ที่ Namespace เดียวกับที่ Database run อยู่
+
+```Shell
+kubectl create -f secrets/
+```
+
+![](./create-secrets.jpg)
+
+## Create Backup CronJob
+
+คราวนี้ก็มาถึงพระเอกของงานเราแล้ว ก็คือตัว CronJob นั้นเอง
+
+mongodb-backup-schedule.yaml
+
+```YAML
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: mongodb-backup-schedule
+  namespace: mongodb
+spec:
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - command:
+            - /gsutil-to-gcs-sh/gsutil-to-gcs.sh
+            envFrom:
+            - configMapRef:
+                name: mongodb-backup-schedule-env
+            image: google/cloud-sdk
+            imagePullPolicy: Always
+            name: gsutil-to-gcs
+            resources:
+              limits:
+                cpu: 500m
+                ephemeral-storage: 10Gi
+                memory: 256Mi
+              requests:
+                cpu: 200m
+                ephemeral-storage: 10Gi
+                memory: 256Mi
+            volumeMounts:
+            - mountPath: /backups
+              name: backups
+            - mountPath: /service-key
+              name: service-key
+            - mountPath: /gsutil-to-gcs-sh
+              name: gsutil-to-gcs-sh
+          initContainers:
+          - command:
+            - /mongodump-all-db-sh/mongodump-all-db.sh
+            envFrom:
+            - secretRef:
+                name: mongodb-user-password
+            - configMapRef:
+                name: mongodb-backup-schedule-env
+            image: mongo:4.2
+            imagePullPolicy: Always
+            name: mongodump-all-db
+            resources:
+              limits:
+                cpu: 500m
+                ephemeral-storage: 10Gi
+                memory: 256Mi
+              requests:
+                cpu: 200m
+                ephemeral-storage: 10Gi
+                memory: 256Mi
+            volumeMounts:
+            - mountPath: /mongodump-all-db-sh
+              name: mongodump-all-db-sh
+            - mountPath: /backups
+              name: backups
+          restartPolicy: Never
+          volumes:
+          - emptyDir:
+              sizeLimit: 10Gi
+            name: backups
+          - configMap:
+              defaultMode: 320
+              items:
+              - key: mongodump-all-db.sh
+                path: mongodump-all-db.sh
+              name: mongodump-all-db-sh
+            name: mongodump-all-db-sh
+          - configMap:
+              defaultMode: 320
+              items:
+              - key: gsutil-to-gcs.sh
+                path: gsutil-to-gcs.sh
+              name: gsutil-to-gcs-sh
+            name: gsutil-to-gcs-sh
+          - name: service-key
+            secret:
+              defaultMode: 320
+              items:
+              - key: service-key.json
+                path: service-key.json
+              secretName: gcs-service-account-key
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 10
+```
+
+อธิบายเพิ่มเติม
+
+- เป็น CronJob ที่ผมตั้ง schedule เป็นทุก 5 นาที
+- มี Volume 4 อัน
+  - emptyDir เป็น Volume ที่จะเก็บไฟล์ Backup ลงเครื่อง และสามารถให้ Container ทั้ง 2 ตัวสามารถใช้ไฟล์ Backup ร่วมกันได้
+  - mongodump-all-db-sh เป็น ConfigMap ที่เก็บ Script ในการ Dump database ที่ต้องการ Backup ออกมา
+  - gsutil-to-gcs-sh เป็น ConfigMap ที่เก็บ Script ในการนำ Backup file ทั้ง BACKUPS_FOLDER ไปเก็บไว้ที่ GCS Bucket
+  - service-key เป็น Secret ที่เก็บค่า Service account key
+- มี Init container
+  - ใช้ image เป็น mongo:4.2
+  - อ่านค่าตัวแปรจากที่เก็บ MONGO_HOST, MONGO_USERNAME, MONGO_PASSWORD และ BACKUPS_FOLDER จาก configmap และ secret
+  - ทำการ Volume mounts
+    - mongodump-all-db-sh เพื่อมาสร้างเป็นไฟล์ mongodump-all-db.sh
+    - backups เพื่อเก็บไฟล์ที่ Dump ออกมาได้ให้อีก Container อื่นสามารถใช้งานได้
+  - override command ด้วย script mongodump-all-db.sh
+- Container หลัก
+  - ใช้ image เป็น google/cloud-sdk
+  - อ่านค่าตัวแปรจากที่เก็บ GCS_BUCKET และ BACKUPS_FOLDER จาก configmap
+  - ทำการ Volume mounts
+    - gsutil-to-gcs-sh เพื่อมาสร้างเป็นไฟล์ gsutil-to-gcs.sh
+    - backups เพื่ออ่านไฟล์ที่ Dump จาก Container ก่อนหน้า
+  - override command ด้วย script gsutil-to-gcs.sh
+
+ทำการสร้าง CronJob เข้าไปใน K8s Cluster โดย YAML ผมจะทำอยู่ที่ Namespace เดียวกับที่ Database run อยู่
+
+```Shell
+kubectl create -f cronjobs/
+```
+
+![](./create-cronjob.jpg)
+
+หลักจากนั้นรอสักพัก เพราะเราตั้งไว้ว่าทุกเวลาที่หาร 5 นาทีลงตัวถึงจะเริ่มทำงาน
+
+![](./cronjob-success/cronjob-success-1.jpg) <br />
+ภาพเมื่อ CronJob Backup ทำงานเสร็จ <br /><br />
+
+![](./cronjob-success/cronjob-success-2.jpg) <br />
+ภาพ Database ที่ Backup ได้ <br /><br />
+
+![](./cronjob-success/cronjob-success-3.jpg) <br />
+ภาพไฟล์ Collection ที่ทำการ Backup ได้ <br />
+
+เนื่องจากจุดประสงค์หลักของบทความนี้คือการทำ Schedule Backup MongoDB ใน GKE Cluster ไม่ได้กล่าวถึงการ Restore เพราะวิธีการต่อ MongoDB ที่ Run อยู่ใน K8s มันมีได้หลายวิธี ให้คุณผู้อ่านไปเลือกที่เหมาะสมเองจะดีกว่า แต่สามารถไปดูคลิปเต็มตัวอย่างการ Restore ในงานได้ที่ [Backup MongoDB in GKE by Cronjob Workload to GCS - Yosapol Jitrak](https://youtu.be/UEq9PNiUqf0?t=10516)
+
+เป็นบทความที่ค่อนข้างยาวเลย หวังว่าผู้ที่หลงเข้ามาอ่านจะได้ประโยชน์ไปบ้างนะครับ บทความนี้ตอนแรกคิดว่าจะเขียนตั้งแต่ปีที่แล้ว แต่ก็เลื่อนมาเรื่อย จนมีโอกาสได้มาเป็น Speaker ก็เลยถือโอกาสเขียนมันซะเลยแล้วกัน ไว้เจอกันที่บทความหน้าครับ

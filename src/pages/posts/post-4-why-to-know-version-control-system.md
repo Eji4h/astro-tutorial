@@ -1,0 +1,98 @@
+---
+title: Why to know Version Control System
+date: "2020-09-26T13:14:00.000Z"
+description: "ทำไมต้องรู้จักกับ Version Control System"
+createBy: "Yosapol Jitrak"
+---
+
+<span style="color: red">บทความนี้เป็นการนำบทความที่เคยเขียนเมื่อหลายปีมาแล้ว มาทำการ Repost ใหม่</span><br />
+
+โดยส่วนตัวแล้ว ผมมองว่าเรื่อง Version Control System <br />
+เป็นสิ่งสำคัญที่ควรรู้อันดับต้น ๆ ของงานสาย Software Development เลยละ <br />
+
+หลายคนที่หลงเข้ามาอ่าน อาจจะเคยประสบปัญหา
+
+- ไฟล์งานเสีย
+- เซฟทับผิดไฟล์ งานหายเกลี้ยง
+- เผลอลบไฟล์ หรือ Folder ผิด แล้ว ล้าง Recycle Bin หรือ Trash ไปเรียบร้อยแล้ว
+- อยากเอางาน หรือไฟล์ อันก่อนหน้านี้กลับมา
+- แก้ไฟล์ ที่คิดว่าเสร็จเรียบร้อยแล้ว เลยตั้งชื่อมันว่า Final หรือ Lastest <br />
+  แต่กลับต้องแก้ไขเพิ่มเติมอีกไม่รู้กี่รอบ <br />
+  จนมันมีไฟล์กองใน Folder หน้าตา ประมาณแบบนี้ Final.psd, Final1.psd, Final2.psd, Lastest.psd, FinalLastest.psd <br />
+- ปัญหาเวลารวมงานกับคนอื่น
+  - ถือ Thumbdrive ไปเสียบกับอีกเครื่อง
+    สมัยนี้ก็ผ่านช่องทาง Online ต่าง ๆ (เหมือนแก่)
+  - ไม่รู้ว่าของใครมีอะไรใหม่กว่าบ้าง เวลารวมกันต้องคุยกันว่าทำอะไรไป
+  - พอรวมกันเสร็จ ต้อง Copy กลับไปทับกับเครื่องที่เหลือ
+  - บางอย่างต้องเลือกของใครสักคนนึงก่อน แล้วทำใหม่อีกรอบ ในส่วนที่เหลือ
+
+ในสมัยยังเรียน และผมเพิ่งจบออกมาทำงานใหม่ ๆ <br />
+ผมเคยประสบปัญหา อยากเอางานก่อนหน้านี้กลับมา <br />
+ลบไปแล้วบ้าง อะไรบ้าง หรือเอาของเมื่อวานกลับมาดู <br />
+ไม่ว่าจะด้วยเหตุผลอะไรก็ตาม <br />
+ผมเลยใช้วิธีการ Backup งานไว้เป็น Savepoint ไว้เสมอ <br />
+ซึ่งแรก ๆ มันก็โอเคอยู่ <br />
+แต่พอโปรเจคมันใหญ่ ไฟล์รูปมันเริ่มเยอะ <br />
+Copy ทีนึงก็ใช้เวลานาน แถมยังกินพื้นที่ Harddisk อีกต่างหาก <br />
+
+ปัญหาต่อมาคือไม่รู้แต่ล่ะ version ที่ทำไปมีรายละเอียดอะไรบ้าง เลยต้องทำไฟล์ Version เป็น Note กำกับไว้ <br />
+
+![Version Note](./version-note.jpg)
+
+ที่ยกมานี้แค่ทำคนเดียวนะครับ <br />
+เพราะคนอื่นส่ง Asset พวก Sprite, Texture, 3D มารวมที่ผมหมด <br />
+ผ่าน Thumbdrive นั้นแหละ <br />
+แล้วถ้าทำงานกับคนอื่นล่ะ <br />
+ที่มันต้องรวมงานกันไป รวมงานกันมา <br />
+อันนี้ขอไม่เล่า เพราะมันจะยาว และเฉพาะทางเกินไป <br />
+เขาก็เลยมี Version Control System ออกมาแก้ปัญหาที่กล่าวมาข้างต้นได้ทั้งหมด <br />
+ผมอาจจะเล่าปัญหาต่าง ๆ ไม่ครบนะครับ <br />
+อันนี้แค่ประสบการณ์ส่วนตัวอย่างเดียว <br />
+Version Control เนีย มันมีอะไรที่แจ่ม ๆ น่าสนใจบ้าง
+
+- เก็บ Version เป็นประวัติ
+  - สามารถดูทุกรายละเอียดของเปลี่ยนแปลงไปได้ ในแต่ล่ะ Version
+  - ชื่อไฟล์ใช้ชื่อเดียวได้ทุก Version ไม่ต้องตั้ง File1, File2, File3 อีกต่อไป
+- ย้อน Version กลับได้
+  - ย้อน Version กลับได้ทั้ง Project หรือสามารถเลือกไฟล์ที่ต้องการจะย้อนก็ได้
+- การสำรองข้อมูล
+  - สามารถสำรองข้อมูลบน Server ได้
+
+ไอ้เจ้า Version Control ก็ดันมีหลายเจ้าซะเหลือเกิน
+
+แต่ตอนนั้นปี 2014 Git มาแรง แซงทางโค้งหมด
+
+![Version Control Systems used by Developers](./version-control-systems-used-by-developers.jpg)
+Credit: https://rhodecode.com/insights/version-control-systems-2016
+
+ตอนนั้นผมก็เลยตัดสินใจเลือกใช้เจ้า Git ที่ว่านั้นแหละ <br />
+Git ข้าเลือกเจ้า <br />
+ซึ่งผมก็เลือกไม่ผิด เพราะปัจจุบันเป็น Number One เป็นที่เรียบร้อยแล้ว <br />
+อันอื่นมันก็มีข้อดีของมันนะ แต่ผมไม่เคยใช้ <br />
+
+ที่มันได้รับความนิยมขนาดนี้ เพราะว่าน่าจะมาจากเหตุผลที่ว่า <br />
+โครงการ Open source นั้นใช้ GitHub เสียเป็นส่วนใหญ่ <br />
+ชื่อมันก็บอกอยู่แล้วเนอะว่า Git เพราะฉะนั้นมันก็ต้องใช้ Git แน่นอนอยู่แล้ว <br />
+โครงการ Open source นั้นคืออะไร ผมขอยกหน้าที่นี้ให้กับ Google <br />
+เพราะประเด็นหลักเราคือ Version Control System (VCS) <br />
+สรุปแล้วมันสามารถแก้ปัญหาที่ผมเจอมาตลอด <br />
+ตั้งแต่มัธยม มหาวิทยาลัย จนถึงตอนทำงาน <br />
+ไม่ว่าจะเป็นเรื่อง ไฟล์หาย, ไฟล์เสีย, การตั้งชื่อไฟล์, การย้อน Version, การรวมงานกับคนอื่น <br />
+เจ้า Git เนีย มันแก้ปัญหาทุกอย่างที่ว่ามาได้จริง ๆ <br />
+เพราะฉะนั้น ใครที่เป็น Software Developer <br />
+แล้วยังไม่ได้ใช้ Version Control System หรือ VCS เนีย <br />
+ก็ไปหัดใช้ซะเหอะ ชีวิตจะได้สบายขึ้น <br />
+มีทั้งแบบ Command-line และ GUI ให้เลือกใช้ได้ตามสบายใจ <br />
+
+แบบ Command line <br />
+[<img src="http://2.bp.blogspot.com/-s_hKo72A__c/UQcUcUJP71I/AAAAAAAAI_M/Zf0G9Zi_1b0/s1600/git-log-commit-graph-decorate-oneline-abbrev-commit.png">](http://2.bp.blogspot.com/-s_hKo72A__c/UQcUcUJP71I/AAAAAAAAI_M/Zf0G9Zi_1b0/s1600/git-log-commit-graph-decorate-oneline-abbrev-commit.png)
+Credit: http://jr0cket.co.uk/2013/01/git-log-makes-multiple-repos-easier-to.html.html
+
+แบบ GUI <br />
+[<img src="https://1.bp.blogspot.com/-MPfrOZJyleU/XDSll2gA-1I/AAAAAAAADig/C5iiScQXOYgGvI2MBD4ZhLqj1xKGUSDrQCLcBGAs/s1600/1001.jpg">](https://1.bp.blogspot.com/-MPfrOZJyleU/XDSll2gA-1I/AAAAAAAADig/C5iiScQXOYgGvI2MBD4ZhLqj1xKGUSDrQCLcBGAs/s1600/1001.jpg)
+Credit: http://shankarjdelphi.blogspot.com/2019/01/set-external-diff-tool-on-sourcetree.html
+
+และก็ไม่จำเป็นต้องเป็น Programmer หรือ Software Developer อย่างเดียวที่ใช้ได้นะ <br />
+ใช้กับงานอื่น ๆ ก็ได้ที่ต้องการทำเรื่อง Version แบบนี้ หรือจะเอาไว้เป็น Backup ก็ได้นะ <br />
+
+อาจจะเขียนเนื้อสำคัญไม่ครบ ก็ขออภัยด้วยครับ <br />
