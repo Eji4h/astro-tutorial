@@ -1,11 +1,16 @@
 ---
+import dayjs from "dayjs";
 interface Props {
 	title: string;
 	url: string;
+	description: string;
+	pubDate: string;
 }
-const { title, url } = Astro.props;
+const { title, url, description, pubDate } = Astro.props;
 ---
 
-<li class="text-blue-600 hover:underline hover:text-blue-100">
-	<a href={url}>{title}</a>
+<li class="list-disc">
+	<a href={url}><h3>{title}</h3></a>
+	<p>{description}</p>
+	<p>{dayjs(pubDate).format("DD MMM YYYY")}</p>
 </li>

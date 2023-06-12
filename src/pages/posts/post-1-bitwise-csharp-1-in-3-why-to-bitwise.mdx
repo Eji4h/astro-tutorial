@@ -4,12 +4,8 @@ title: "Bitwise C# [1/3] Why to Bitwise"
 pubDate: 2020-01-10
 description: "ทำไมเราต้องใช้ Bitwise"
 author: "Yosapol Jitrak"
-image:
-  url: "https://docs.astro.build/assets/full-logo-light.png"
-  alt: "The full Astro logo."
 tags: ["C#", "Bitwise"]
 ---
-
 <span style="color: red">บทความนี้เป็นการนำบทความที่เคยเขียนเมื่อหลายปีมาแล้ว มาทำการ Repost ใหม่</span><br />
 
 เมื่อหลายปีที่แล้ว สมัยที่ผมยังทำตำแหน่ง Game Developer อยู่ <br />
@@ -79,29 +75,29 @@ bool isPurple = (color1 == ColorType.Red && color2 == ColorType.Blue) ||
 - เจ้าของสามารถ อ่าน เขียน และ Execute ได้ทั้งหมด
 - ผู้ใช้กลุ่มเดียวกับเจ้าของสามารถ อ่าน และ Execute ได้
 - ผู้ใช้อื่น ๆ สามารถ อ่าน และ Execute ได้
-  <br />
+<br />
 
 644 จึงหมายถึง
 
 - เจ้าของสามารถ อ่าน และเขียน ได้
 - ผู้ใช้กลุ่มเดียวกับเจ้าของสามารถ อ่าน ได้อย่างเดียว
 - ผู้ใช้อื่น ๆ สามารถ อ่าน ได้อย่างเดียว
-  <br />
+<br />
 
-ความรู้เรื่องเลขฐาน 2 ที่เรียนมาตั้งแต่สมัยมัธยมกลับมามีประโยชน์ (ㅠ\_ㅠ) <br />
+ความรู้เรื่องเลขฐาน 2 ที่เรียนมาตั้งแต่สมัยมัธยมกลับมามีประโยชน์ (ㅠ_ㅠ) <br />
 เรียนมาตั้งนานเพิ่งจะเห็นประโยชน์จริงจังก็คราวนี้ <br />
 จะสังเกตได้ว่าเรื่อง Files / Directory permission ที่กล่าวไปใช้เลขฐาน 2 ดังนี้ <br />
 
-| สิทธิ์                  | เลขฐาน 10 | เลขฐาน 2  |
-| ----------------------- | :-------: | :-------: |
-| ไม่มีสิทธิ์อะไรใด ๆ เลย |     0     | 0000 0000 |
-| Execute                 |     1     | 0000 0001 |
-| Write                   |     2     | 0000 0010 |
-| Read                    |     4     | 0000 0100 |
+| สิทธิ์                | เลขฐาน 10 |  เลขฐาน 2 |
+|--------------------|:---------:|:---------:|
+| ไม่มีสิทธิ์อะไรใด ๆ เลย |         0 | 0000 0000 |
+| Execute            |         1 | 0000 0001 |
+| Write              |         2 | 0000 0010 |
+| Read               |         4 | 0000 0100 |
 
 ตอนนี้พอจะเห็นเริ่มเห็นไอเดียการไปใช้งานกันแล้วใช่ไหมครับ <br />
 <br />
 
-บทความหน้าผมจะมาเขียนเรื่อง [Bitwise Operator](/posts/post-2-bitwise-csharp-2-in-3-bitwise-operator/) ต่อให้ครับ <br />
+บทความหน้าผมจะมาเขียนเรื่อง [Bitwise Operator](https://jitrak.dev/bitwise-csharp-2-in-3-bitwise-operator/) ต่อให้ครับ <br />
 Link: [Bitwise C# [2/3] Bitwise Operator](https://jitrak.dev/bitwise-csharp-2-in-3-bitwise-operator/) <br />
 Link: [Bitwise C# [3/3] Apply Bitwise](https://jitrak.dev/bitwise-csharp-3-in-3-apply-bitwise/) <br />

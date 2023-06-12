@@ -2,18 +2,9 @@
 
 @tailwind base;
 
-html.dark {
-  background-color: #1a202c;
-  color: #fff;
-}
-
 /* components.css */
 
 @tailwind components;
-
-.dark .nav-links a {
-  color: #fff;
-}
 
 /* utilities.css */
 

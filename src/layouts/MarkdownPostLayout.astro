@@ -32,10 +32,10 @@ const { frontmatter } = Astro.props;
 			) : undefined
 		}
 
-		<div class="flex flex-row">
-			{
+		<div class="flex items-center">
+			Tags: {
 				frontmatter.tags.map((tag) => (
-					<p class="mx-4">
+					<p class="mx-2">
 						<a class="text-blue-600" href={`/tags/${tag}`}>
 							{tag}
 						</a>
