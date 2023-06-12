@@ -1,15 +1,17 @@
 ---
+layout: ../../layouts/MarkdownPostLayout.astro
 title: Backup MongoDB in GKE by Cronjob Workload to GCS
-date: '2020-10-28T18:00:00.000Z'
+pubDate: '2020-10-28T18:00:00.000Z'
 description: 'ทำ Backup MongoDB ใน Google Kubernetes Engine ด้วย CronJob Workload to Google Cloud Storage'
-createBy: 'Yosapol Jitrak'
+author: Yosapol Jitrak
+tags: ["C#", "Bitwise"]
 ---
 
 ล่าสุดในงาน GDG Cloud Bangkok DevFest 2020 <br />
 ผมได้เป็น Speaker ในหัวข้อ Backup MongoDB in GKE by Cronjob Workload to GCS <br />
 ซึ่งเวลาค่อนข้างจำกัด ไม่มีเวลาอธิบายเท่าไหร่ จึงคิดว่าจะมาอธิบายแบบละเอียดในบทความนี้ <br />
 
-![Yosapol Jitrak](./speaker-from-cloud-ace-thailand.png)
+![Yosapol Jitrak](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/speaker-from-cloud-ace-thailand.png)
 ขอบคุณรูปจาก คลาวด์ เอซ - Cloud Ace Thailand <br />
 
 # Why
@@ -32,19 +34,19 @@ createBy: 'Yosapol Jitrak'
 
 ไม่นานมานี้ผมได้รู้จักกับ Verelo ซึ่งเป็นเครื่องมือเอาไว้สำหรับ Backup และ Restore ได้ทั้ง Kubernetes (K8s) resources และ Persistent Volumes (PV) ซึ่งจากที่ดูแล้วน่าจะตอบโจทย์เราได้เกือบหมดครับ ยกเว้นเสียแต่เรื่องสามารถกู้ข้อมูลคืนแค่บาง Collection ได้ ซึ่งถ้าเราใช้ Velero ก็ทำไม่ได้ครับ <br />
 
-![Velero](./velero.png)
+![Velero](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/velero.png)
 Reference: https://velero.io/ <br />
 
 คราวนี้เราลองมาดูกันนะครับ จริง ๆ แล้วใน K8s ก็มี Workload ที่เป็น CronJob ที่ถึงแม้ว่าจะเป็น Beta version แต่ก็มีมานานแล้ว ซึ่งดูน่าจะตอบโจทย์ของเราพอดี <br />
-![CronJob Workload](./cronjob-workload.png)
+![CronJob Workload](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/cronjob-workload.png)
 Reference: https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/ <br />
 
 นอกจากนี้ คำถามต่อมาคือเราจะเอาข้อมูล Backup ของเราไปเก็บไว้ที่ไหน ซึ่งถ้าใครเคยใช้ Cloud มาบ้างน่าจะพอรู้จักพวก Simple Storage Service (S3) ของ AWS หรือ Google Cloud Storage (GCS) ของ Google Cloud เป็นต้น ซึ่งดูแล้วน่าจะเหมาะสมกว่าการที่เราจะต้องสร้าง PV และ Disk มาเก็บไว้เอง ทั้งเรื่องของ Service-level agreement (SLA) และการ Maintain ต่าง ๆ แน่นอนงานนี้เราอยู่ในงาน GDG Cloud Bangkok DevFest 2020 แถม Cluster อยู่ใน GKE ผมจึงจะกล่าวถึง GCS เป็นหลัก ใน GCS ยังมีสิ่งที่เรียกว่า Object Lifecycle Management ที่ทำให้เราสามารถตั้งกฎได้ว่าเมื่อ Object ที่ถูกเก็บไว้ถึงเวลาที่กำหนด เราสามารถสั่งให้ลบ หรือย้าย Class ของ Object นั้นไปยัง Class ที่มีราคาถูกกว่าเดิมได้ <br />
 
-![Object Lifecycle Management](./object-lifecycle-management.png)
+![Object Lifecycle Management](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/object-lifecycle-management.png)
 Reference: https://cloud.google.com/storage/docs/lifecycle <br />
 
-![Backup MongoDB in GKE by Cronjob Workload to GCS Overview](./backup-mongodb-in-gke-by-cronjob-workload-to-gcs-overview.png)
+![Backup MongoDB in GKE by Cronjob Workload to GCS Overview](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/backup-mongodb-in-gke-by-cronjob-workload-to-gcs-overview.png)
 ภาพไอเดียคร่าว ๆ <br />
 
 ## คราวนี้มาต่อของที่จำเป็นจะต้องใช้นะครับ
@@ -60,20 +62,20 @@ Reference: https://cloud.google.com/storage/docs/lifecycle <br />
 
 เริ่มแรกสุดก็คิดแบบง่ายก่อนเลย ก็คือเราจะต้องทำการ Build image ใหม่ขึ้นมา เพื่อให้มี command ทั้ง 2 ตัว ซึ่งถ้าลอง Googling ดูก็จะมีคนคิดเหมือนกัน แต่เป็นใน Version MySQL ตามรูปด้านล่างนี้ <br />
 
-![MySQL Backup Docker Image](./mysql-backup-docker-image.png)
+![MySQL Backup Docker Image](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/mysql-backup-docker-image.png)
 Reference: https://medium.com/searce/cronjob-to-backup-mysql-on-gke-23bb706d9bbf <br />
 
 แต่ก็มาคิดต่ออีกว่า แล้วถ้าเกิดต้องการเปลี่ยน Version ของ MongoDB หรือ Google Cloud SDK เราก็จะต้องมาทำ Build image ใหม่อีกอย่างนั้นเหรอ ตอนนั้น MongoDB ที่ดูแลอยู่มีหลาย Cluster รวมถึงแต่ละ Cluster ก็มีหลาย Version อีก เราจะต้อง Build image แยกของใครของมันก็ดูจะถึกเกินไป แล้วเวลาที่จะต้อง Update Google Cloud SDK version ทีนี้จะต้อง Build ใหม่กี่ image แค่คิดก็ปวดหัวแล้ว <br />
 
-![Think Meme](./think-meme.png)
+![Think Meme](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/think-meme.png)
 
 ซึ่งถัดมาก็คิดต่อได้ว่า Pod ใน K8s สามารถมีได้หลาย Container รวมถึงมี Init containers ด้วย <br />
 
-![Sidecar Container](./sidecar-container.gif)
+![Sidecar Container](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/sidecar-container.gif)
 
 Reference: https://banzaicloud.com/blog/k8s-sidecars/ <br /><br />
 
-![Backup MongoDB in GKE by Cronjob Workload to GCS Detail](./backup-mongodb-in-gke-by-cronjob-workload-to-gcs-detail.png)
+![Backup MongoDB in GKE by Cronjob Workload to GCS Detail](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/backup-mongodb-in-gke-by-cronjob-workload-to-gcs-detail.png)
 ภาพในหัวจึงออกมาได้เป็นแบบนี้ <br />
 
 Pod มี 2 Container ที่มี image ตามนี้ <br />
@@ -100,56 +102,56 @@ Pod มี 2 Container ที่มี image ตามนี้ <br />
 อย่างแรกเลยจะทำการเตรียม Service account <br />
 
 ไปที่ IAM และเลือกไปที่ Service Accounts
-![](./create-service-accounts/create-service-account-1.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-1.jpg) <br />
 
 จากนั้นกดปุ่ม CREATE SERVICE ACCOUNT
-![](./create-service-accounts/create-service-account-2.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-2.jpg) <br />
 
 ทำการตั้งชื่อ Service account name จากนั้น กดปุ่ม CREATE
-![](./create-service-accounts/create-service-account-3.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-3.jpg) <br />
 
 ถึงตรงนี้จริง ๆ เราสามารถให้สิทธิ์จัดการ Google Cloud Storage กับ Service account นี้กับทั้ง Google Cloud Project นี้ได้เลย
 แต่ผมจะไม่ให้สิทธิ์ที่ตรงนี้ เพราะเราต้องการให้สิทธิ์กับแค่ Bucket เดียวเท่านั้น เราควรให้สิทธิ์เท่าที่จำเป็น เพราะฉะนั้นกด DONE ไปได้เลย
-![](./create-service-accounts/create-service-account-4.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-4.jpg) <br />
 
 เมื่อสร้าง Service account เสร็จแล้ว ให้ทำการ Copy Email ของ Service account ที่เพิ่งสร้างเก็บไว้ก่อน
-![](./create-service-accounts/create-service-account-5.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-5.jpg) <br />
 
 ถัดไปเราจะมาทำการสร้าง Key จาก Service account นี้ กดไปที่จุด 3 จุด ตรงคอลัมน์ Actions แล้วกด Create key ต่อเลย
-![](./create-service-accounts/create-service-account-6.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-6.jpg) <br />
 
 เมื่อกด Create key มาแล้ว จะมีให้เลือกระหว่าง JSON และ P12 ปกติจะใช้ JSON ก็เลือก JSON และกด CREATE ไป หลังจากนั้นเราก็เลือกเซฟไฟล์ไว้สักที่ในเครื่องเราก่อน
-![](./create-service-accounts/create-service-account-7.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-service-accounts/create-service-account-7.jpg) <br />
 
 ## Create GCS Bucket
 
 ต่อมาจะทำการสร้าง Google Cloud Storage Bucket ใหม่ <br />
 
 ไปที่ Storage ใน Google Cloud Console
-![](./create-gcs-buckets/create-gcs-bucket-1.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-gcs-buckets/create-gcs-bucket-1.jpg) <br />
 
 กดปุ่ม Create Bucket
-![](./create-gcs-buckets/create-gcs-bucket-2.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-gcs-buckets/create-gcs-bucket-2.jpg) <br />
 
 ตั้งชื่อ แล้วกด CONTINUE
-![](./create-gcs-buckets/create-gcs-bucket-3.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-gcs-buckets/create-gcs-bucket-3.jpg) <br />
 
 เลือก Location type จากนั้นกดปุ่ม CREATE
-![](./create-gcs-buckets/create-gcs-bucket-4.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-gcs-buckets/create-gcs-bucket-4.jpg) <br />
 
 ## Binding Service account to Bucket
 
 เมื่อเราสร้าง GCS Bucket เป็นที่เรียบร้อยแล้ว เราจะทำการผูกสิทธิ์ในการจัดการกับ Bucket นี้ให้กับ Service account ที่เราสร้างไว้ก่อนหน้านี้ <br />
 
 ไปที่ PERMISSIONS
-![](./binding-service-account-to-buckets/binding-service-account-to-bucket-1.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/binding-service-account-to-buckets/binding-service-account-to-bucket-1.jpg) <br />
 
 จากนั้นกดไปที่ปุ่ม +ADD
-![](./binding-service-account-to-buckets/binding-service-account-to-bucket-2.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/binding-service-account-to-buckets/binding-service-account-to-bucket-2.jpg) <br />
 
 - ช่อง New members ให้ใส่เป็น Email ของ Service account ที่ได้ Copy ไว้ก่อนหน้านี้
 - ส่วน Role ผมให้เป็น Storage Object Admin
-  ![](./binding-service-account-to-buckets/binding-service-account-to-bucket-3.jpg) <br />
+  ![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/binding-service-account-to-buckets/binding-service-account-to-bucket-3.jpg) <br />
 
 ## Create ConfigMaps
 
@@ -213,7 +215,7 @@ metadata:
 kubectl create -f configs/
 ```
 
-![](./create-configmaps.jpg)
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-configmaps.jpg)
 
 ## Create Secrets
 
@@ -280,7 +282,7 @@ type: Opaque
 kubectl create -f secrets/
 ```
 
-![](./create-secrets.jpg)
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-secrets.jpg)
 
 ## Create Backup CronJob
 
@@ -410,17 +412,17 @@ spec:
 kubectl create -f cronjobs/
 ```
 
-![](./create-cronjob.jpg)
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/create-cronjob.jpg)
 
 หลักจากนั้นรอสักพัก เพราะเราตั้งไว้ว่าทุกเวลาที่หาร 5 นาทีลงตัวถึงจะเริ่มทำงาน
 
-![](./cronjob-success/cronjob-success-1.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/cronjob-success/cronjob-success-1.jpg) <br />
 ภาพเมื่อ CronJob Backup ทำงานเสร็จ <br /><br />
 
-![](./cronjob-success/cronjob-success-2.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/cronjob-success/cronjob-success-2.jpg) <br />
 ภาพ Database ที่ Backup ได้ <br /><br />
 
-![](./cronjob-success/cronjob-success-3.jpg) <br />
+![](/src/assets/images/backup-mongodb-in-gke-by-cronjob-workload-to-gcs/cronjob-success/cronjob-success-3.jpg) <br />
 ภาพไฟล์ Collection ที่ทำการ Backup ได้ <br />
 
 เนื่องจากจุดประสงค์หลักของบทความนี้คือการทำ Schedule Backup MongoDB ใน GKE Cluster ไม่ได้กล่าวถึงการ Restore เพราะวิธีการต่อ MongoDB ที่ Run อยู่ใน K8s มันมีได้หลายวิธี ให้คุณผู้อ่านไปเลือกที่เหมาะสมเองจะดีกว่า แต่สามารถไปดูคลิปเต็มตัวอย่างการ Restore ในงานได้ที่ [Backup MongoDB in GKE by Cronjob Workload to GCS - Yosapol Jitrak](https://youtu.be/UEq9PNiUqf0?t=10516)
