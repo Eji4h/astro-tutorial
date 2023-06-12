@@ -9,14 +9,16 @@ const pageTitle = "Blog posts";
 	<div class="m-4">
 		<ul>
 			{
-				allPosts.map((post) => (
-					<BlogPost
-						url={post.url}
-						title={post.frontmatter.title}
-						description={post.frontmatter.description}
-						pubDate={post.frontmatter.pubDate}
-					/>
-				))
+				allPosts
+					.reverse()
+					.map((post) => (
+						<BlogPost
+							url={post.url}
+							title={post.frontmatter.title}
+							description={post.frontmatter.description}
+							pubDate={post.frontmatter.pubDate}
+						/>
+					))
 			}
 		</ul>
 	</div>
