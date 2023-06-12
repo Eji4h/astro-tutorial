@@ -12,5 +12,5 @@ const { title, url, description, pubDate } = Astro.props;
 <li class="list-disc">
 	<a href={url}><h3>{title}</h3></a>
 	<p>{description}</p>
-	<p>{dayjs(pubDate).format("DD MMM YYYY")}</p>
+	<p>{dayjs(pubDate).format("DD MMM YYYY HH:mm")}</p>
 </li>

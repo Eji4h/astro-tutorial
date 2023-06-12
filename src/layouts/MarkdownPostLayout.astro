@@ -1,4 +1,5 @@
 ---
+import dayjs from "dayjs";
 import BaseLayout from "./BaseLayout.astro";
 interface Props {
 	frontmatter: {
@@ -20,7 +21,7 @@ const { frontmatter } = Astro.props;
 <BaseLayout pageTitle={frontmatter.title}>
 	<div class="m-4">
 		<p><em>{frontmatter.description}</em></p>
-		<p>{frontmatter.pubDate.slice(0, 10)}</p>
+		<p>{dayjs(frontmatter.pubDate).format("DD MMM YYYY HH:mm")}</p>
 		<p>Written by: {frontmatter.author}</p>
 		{
 			frontmatter.image ? (
