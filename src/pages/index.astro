@@ -7,10 +7,14 @@ const pageTitle = "Blog posts";
 
 <BaseLayout pageTitle={pageTitle}>
 	<div class="m-4">
-		<ul>
+		<ol>
 			{
 				allPosts
-					.reverse()
+					.sort(
+						(a, b) =>
+							new Date(b.frontmatter.pubDate).getTime() -
+							new Date(a.frontmatter.pubDate).getTime()
+					)
 					.map((post) => (
 						<BlogPost
 							url={post.url}
@@ -20,6 +24,6 @@ const pageTitle = "Blog posts";
 						/>
 					))
 			}
-		</ul>
+		</ol>
 	</div>
 </BaseLayout>

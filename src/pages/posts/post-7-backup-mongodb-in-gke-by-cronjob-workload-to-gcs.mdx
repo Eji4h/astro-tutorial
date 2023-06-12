@@ -1,10 +1,10 @@
 ---
 layout: ../../layouts/MarkdownPostLayout.astro
 title: Backup MongoDB in GKE by Cronjob Workload to GCS
-pubDate: '2020-10-28T18:00:00.000Z'
+pubDate: 2020-10-28T18:00:00.000Z
 description: 'ทำ Backup MongoDB ใน Google Kubernetes Engine ด้วย CronJob Workload to Google Cloud Storage'
 author: Yosapol Jitrak
-tags: ["C#", "Bitwise"]
+tags: ["MongoDB", "Automate", "Kubernetes", "k8s", "kube", "GKE", "Google Cloud Platform", "GCP", "Google Cloud Storage", "GCS", "Cronjob"]
 ---
 
 ล่าสุดในงาน GDG Cloud Bangkok DevFest 2020 <br />
@@ -159,7 +159,7 @@ Pod มี 2 Container ที่มี image ตามนี้ <br />
 
 ### Create mongodb-backup-schedule-env.yaml
 
-```YAML
+```yaml
 apiVersion: v1
 data:
   BACKUPS_FOLDER: /backups
@@ -175,7 +175,7 @@ metadata:
 
 ### Create mongodump-all-db-sh.yaml
 
-```YAML
+```yaml
 apiVersion: v1
 data:
   mongodump-all-db.sh: |-
@@ -192,7 +192,7 @@ metadata:
 
 ### Create gsutil-to-gcs-sh.yaml
 
-```YAML
+```yaml
 apiVersion: v1
 data:
   gsutil-to-gcs.sh: |-
@@ -211,7 +211,7 @@ metadata:
 
 หลังจากนั้นให้ทำการ Create configmap ทั้งหมดเข้าไปใน K8s Cluster โดย YAML ทั้งหมด ผมจะทำอยู่ที่ Namespace เดียวกับที่ Database run อยู่
 
-```Shell
+```bash
 kubectl create -f configs/
 ```
 
@@ -225,13 +225,13 @@ kubectl create -f configs/
 
 โดยใช้คำสั่ง Base64 และแทนที่ DATA ด้วยข้อมูลที่ต้องการเข้า Base64 นะครับ
 
-```Shell
+```bash
 echo -n "DATA" | base64
 ```
 
 สำหรับ File Service account key ให้ใช้
 
-```Shell
+```bash
 cat service-key.json | base64
 ```
 
@@ -239,7 +239,7 @@ cat service-key.json | base64
 
 สำหรับ Linux อาจจะต้องใช้ท่านี้ในการเข้า Base64 กับ File Service account key เพื่อให้ผลลัพท์อยู่ในบรรทัดเดียว
 
-```Shell
+```bash
 cat service-key.json | base64 -w 0
 ```
 
@@ -247,7 +247,7 @@ cat service-key.json | base64 -w 0
 
 mongodb-user-password.yaml
 
-```YAML
+```yaml
 apiVersion: v1
 data:
   MONGO_PASSWORD:
@@ -263,7 +263,7 @@ type: Opaque
 
 gcs-service-account-key.yaml
 
-```YAML
+```yaml
 apiVersion: v1
 data:
   service-key.json:
@@ -278,7 +278,7 @@ type: Opaque
 
 ทำการสร้าง Secret ทั้งหมด เข้าไปใน K8s Cluster โดย YAML ทั้งหมด ผมจะทำอยู่ที่ Namespace เดียวกับที่ Database run อยู่
 
-```Shell
+```bash
 kubectl create -f secrets/
 ```
 
@@ -290,7 +290,7 @@ kubectl create -f secrets/
 
 mongodb-backup-schedule.yaml
 
-```YAML
+```yaml
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -408,7 +408,7 @@ spec:
 
 ทำการสร้าง CronJob เข้าไปใน K8s Cluster โดย YAML ผมจะทำอยู่ที่ Namespace เดียวกับที่ Database run อยู่
 
-```Shell
+```bash
 kubectl create -f cronjobs/
 ```
 
